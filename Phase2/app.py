@@ -1,4 +1,6 @@
 from dash import Dash, html, callback, Input, Output, dcc
+import dash_dangerously_set_inner_html
+import dash_daq as daq
 import RPi.GPIO as GPIO
 import time
 from time import sleep
@@ -36,39 +38,114 @@ sender_email = 'cookiecove8@gmail.com'
 sender_password = 'skfp plbw ttkw xaip'
 receiver_email = 'baduar10@gmail.com'
 
-app = Dash(__name__)
 
-app.layout = html.Div(children=[
-    html.H1('Practicing Dash'),
-    
-    html.Div(children=[
-        html.Div(children='Phase 1'),
-        # daq.ToggleSwitch(id="click-light", on=False),
-        html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
-    ]),
-    html.Button('Switch Light', id='click_light', n_clicks=0),
+external_scripts = [
+    # "https://cdn.amcharts.com/lib/5/index.js",
+    # "https://cdn.amcharts.com/lib/5/xy.js",
+    # "https://cdn.amcharts.com/lib/5/radar.js",
+    # "https://cdn.amcharts.com/lib/5/themes/Animated.js",
+    # 'tempChart.js',
+    # 'humidityChart.js'
+]
 
-    html.Br(),
-    html.Br(),
+external_stylesheets = [
+    # 'https://codepen.io/chriddyp/pen/bWLwgP.css',
+    # {
+    #     'href': 'https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css',
+    #     'rel': 'stylesheet',
+    #     'integrity': 'sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO',
+    #     'crossorigin': 'anonymous'
+    # }
+]
+with open("tempChart.js", "r") as file:
+    tempChartScript = file.read()
+with open("humidityChart.js", "r") as file:
+    humChartScript = file.read()
 
+
+# app = Dash(__name__)
+app = Dash(__name__, external_scripts=external_scripts, external_stylesheets=external_stylesheets)
+
+app.layout = html.Div([
     html.Div([
-        # daq.ToggleSwitch(id="click-light", on=False),
-        # html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
-        html.Div(children='Phase 2'),
-        html.P("Press Button below to send email about temperature!"),
-        html.Div(children='status email', id='status_email_sent')
+        # html.Meta(charset="UTF-8"),
+        html.Meta(name="viewport", content="width=device-width, initial-scale=1.0"),
+        html.Title("Smart Home Dashboard"),
+        # Include AmCharts scripts
+        html.Script(src="https://cdn.amcharts.com/lib/5/index.js"),  # alert("This alert box was called with the onload event");
+        html.Script(src="https://cdn.amcharts.com/lib/5/xy.js"),
+        html.Script(src="https://cdn.amcharts.com/lib/5/radar.js"),
+        html.Script(src="https://cdn.amcharts.com/lib/5/themes/Animated.js"),
+
+        # Include your custom script.js
+        # html.Script(src="script.js"),
     ]),
-    html.Button('Send Email', id='sending_email', n_clicks=0),
-
-    html.Br(),
-    html.Br(),
-
-    html.H1('DHT11 Sensor Data'),
     html.Div([
-        html.Div("Humdity: ", id='humidity'),
-        html.Div("Temperature: ", id='temperature'),
+        html.Header([
+            html.H1("Smart Home Dashboard", style={'color': '#ecf0f1'}),
+        ]),
+        html.Nav([
+            dcc.Link("Devices", href="#devices", style={'color': '#ecf0f1', 'margin': '0 1em'}),
+            dcc.Link("Sensors", href="#sensors", style={'color': '#ecf0f1', 'margin': '0 1em'}),
+            dcc.Link("Controls", href="#controls", style={'color': '#ecf0f1', 'margin': '0 1em'}),
+        ]),
+        html.Main([
+            html.Section(id="lightswitch", children=[
+                html.H2("Phase 1 - Light Switch"),
+
+                html.Div(children=[
+                    # daq.ToggleSwitch(id="click-light", on=False),
+                    html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                ]),
+                html.Button('Switch Light', id='click_light', n_clicks=0),
+            ]),
+            html.Section(id="email", children=[
+                html.H2("Phase 2 - Email"),
+                html.Div([
+                # daq.ToggleSwitch(id="click-light", on=False),
+                # html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                html.Div(children='Phase 2'),
+                html.P("Press Button below to send email about temperature!"),
+                html.Div(children='status email', id='status_email_sent')
+            ]),
+            html.Button('Send Email', id='sending_email', n_clicks=0),
+            ]),
+            html.Section(id="dht11sensor", children=[
+                html.H2("DHT11 Sensor Data"),
+                html.Div([
+                    # html.Div("Temperature: ", id='temperature'),
+                    # html.Div("Humdity: ", id='humidity'),
+                    daq.Gauge(
+                        color={"gradient":True,"ranges":{"green":[0,6],"yellow":[6,8],"red":[8,10]}},
+                        id="TempGauge",
+                        showCurrentValue=True,
+                        units="Temp " + u'\N{DEGREE SIGN}',
+                        value=temperature,
+                        label='Default',
+                        max=100,
+                        min=0,
+                        size=200,
+                    ),
+                    daq.Gauge(
+                        color={"gradient":True,"ranges":{"white":[0,5],"blue":[5,10]}},
+                        id="HumGauge",
+                        showCurrentValue=True,
+                        units="Hum %",
+                        value=humidity,
+                        label='Default',
+                        max=100,
+                        min=0,
+                        size=200,
+                    )
+                ]),
+                dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
+            ]),
+        ]),
+        # Footer
+        html.Footer([
+            html.P("© 2023 Smart Home Dashboard", style={'color': '#ecf0f1'}),
+        ]),
     ]),
-    dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
 ])
 
 # Phase 1
@@ -182,8 +259,11 @@ def receive_email():
 @callback(
     # Output("status_email_sent", "children"),
     # Input("HumiTemp_read", "n_clicks")
-    Output('humidity', 'children'),
-    Output('temperature', 'children'),
+    # Output('humidity', 'children'),
+    # Output('temperature', 'children'),
+    Output('HumGauge', 'value'),
+    Output('TempGauge', 'value'),
+
     Input('interval-component', 'n_intervals')
 )
 
@@ -207,7 +287,10 @@ def update_sensor_data(n_intervals):
             break
     print(f'Humidity: {dht.humidity:.2f}%')
     print(f'Temperature: {dht.temperature:.2f}°C')
-    return f'Humidity: {dht.humidity:.2f}%', f'Temperature: {dht.temperature:.2f}°C'
+    # return f'Humidity: {dht.humidity:.2f}%', f'Temperature: {dht.temperature:.2f}°C'
+    # return f'Humidity: {temperature}%', f'Temperature: {humidity}°C'
+    # return temperature, humidity
+    return int(f'{dht.humidity:.2f}'), int(f'{dht.temperature:.2f}')
 
 # run app
 if __name__ == '__main__':

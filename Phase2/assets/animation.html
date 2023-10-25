@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Dashboard</title>
+
+    <!-- AmCharts scripts -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/radar.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<!--    <header>-->
+<!--        <h1>Smart Home Dashboard</h1>-->
+<!--    </header>-->
+
+    <nav>
+        <a href="#devices">Devices</a>
+        <a href="#sensors">Sensors</a>
+        <a href="#controls">Controls</a>
+    </nav>
+
+    <main>
+        <section id="devices">
+            <h2>Connected Devices</h2>
+            <p>Device 1: Online</p>
+            <p>Device 2: Offline</p>
+        </section>
+
+        <section id="sensors">
+            <h2>Sensor Data</h2>
+            <p>Temperature: 25°C</p>
+            
+            <div id="tempChart" style="width: 50vw;height: 300px" onload="drawTemp()"></div>
+            <p>Humidity: 50%</p>
+            
+            <div id="humidityChart" style="width: 50vw;height: 300px"></div>
+        </section>
+
+        <section id="controls">
+            <h2>Controls</h2>
+            <button id="turnOnButton">Turn On</button>
+            <button id="turnOffButton">Turn Off</button>
+        </section>
+
+        <!-- AmCharts container -->
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Smart Home Dashboard</p>
+    </footer>
+
+
+<!--    <script src="amChart.js"></script>-->
+    <script src="tempChart.js"></script>
+    <script src="humidityChart.js"></script>
+</body>
+
+</html>
