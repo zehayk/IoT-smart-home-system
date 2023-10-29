@@ -1,5 +1,5 @@
 from dash import Dash, html, callback, Input, Output, dcc
-import dash_dangerously_set_inner_html
+# import dash_dangerously_set_inner_html
 import dash_daq as daq
 import RPi.GPIO as GPIO
 import time
@@ -15,25 +15,28 @@ import email
 import imaplib
 
 # Setup LED 
-# led_pin = 11
-# GPIO.setmode(GPIO.BCM)
-# GPIO.setup(led_pin, GPIO.OUT)
-# GPIO.output(led_pin, GPIO.LOW) 
-# GPIO.setwarnings(False)
+from LED import LED 
+led_pin = 16
+led = LED(led_pin, False)
 
 # Setup DHT11
-# DHT_SENSOR = Adafruit_DHT.DHT11
-DHT_PIN = 11 # GPIO pin for DHT sensor
-MOTOR_PIN = 17  # GPIO pin for the motor (replace with the actual pin number)
-MOTOR_STATUS = False  # Initially, the motor is off
-
+DHT_PIN = 12 # GPIO pin for DHT sensor
+FAN_STATUS = False # Initially, the motor is off
 humidity = 0
 temperature = 0 
+count = 0
+
+# Setup Motor
+from DC_Motor import DC_Motor 
+# MOTOR_PIN = 17  # GPIO pin for the motor (replace with the actual pin number)
+Motor1_pin = 15 # Enable Pin
+Motor2_pin = 13 # Input Pin
+Motor3_pin = 11 # Input Pin
+motor = DC_Motor(Motor1_pin, Motor2_pin, Motor3_pin, False)
+# MOTOR_STATUS = False  # Initially, the motor is off
 
 # Email Information
-subject = 'Check Temp'
-message = 'The current temperature is ***. Would you like to turn on the fan?'
-
+subject = 'Checking Temperature'
 smtp_server = 'smtp.gmail.com'
 sender_email = 'cookiecove8@gmail.com'
 sender_password = 'skfp plbw ttkw xaip'
@@ -98,21 +101,22 @@ app.layout = html.Div([
                     # daq.ToggleSwitch(id="click-light", on=False),
                     html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
                 ]),
-                html.Button('Switch Light', id='click_light', n_clicks=0),
+                # html.Button('Switch Light', id='click_light', n_clicks=0),
+                daq.BooleanSwitch(id='click_light', on=False),
             ]),
-            html.Section(id="email", children=[
-                html.H2("Phase 2 - Email"),
-                html.Div([
+            # html.Section(id="email", children=[
+                # html.H2("Phase 2 - Email"),
+                # html.Div([
                 # daq.ToggleSwitch(id="click-light", on=False),
                 # html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
-                html.Div(children='Phase 2'),
-                html.P("Press Button below to send email about temperature!"),
-                html.Div(children='status email', id='status_email_sent')
-            ]),
-            html.Button('Send Email', id='sending_email', n_clicks=0),
-            ]),
+                # html.Div(children='Phase 2'),
+                # html.P("Press Button below to send email about temperature!"),
+                # html.Div(children='status email', id='status_email_sent')
+            # ]),
+            # html.Button('Send Email', id='sending_email', n_clicks=0),
+            # ]),
             html.Section(id="dht11sensor", children=[
-                html.H2("DHT11 Sensor Data"),
+                html.H2("Phase 2 - DHT11 Sensor Data"),
                 html.Div([
                     # html.Div("Temperature: ", id='temperature'),
                     # html.Div("Humdity: ", id='humidity'),
@@ -121,23 +125,24 @@ app.layout = html.Div([
                         id="TempGauge",
                         showCurrentValue=True,
                         units="Temp " + u'\N{DEGREE SIGN}',
-                        value=temperature,
-                        label='Default',
+                        label='Temperature',
                         max=100,
                         min=0,
                         size=200,
+                        value=0,
                     ),
                     daq.Gauge(
                         color={"gradient":True,"ranges":{"white":[0,5],"blue":[5,10]}},
                         id="HumGauge",
                         showCurrentValue=True,
                         units="Hum %",
-                        value=humidity,
-                        label='Default',
+                        label='Humidity',
                         max=100,
                         min=0,
                         size=200,
-                    )
+                        value=0,
+                    ),
+                    html.Img(src='assets/images/Fan2.PNG', id='status_fan', className="Fan_Off", width="250", height="250"),
                 ]),
                 dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
             ]),
@@ -150,39 +155,72 @@ app.layout = html.Div([
 ])
 
 # Phase 1
-# @callback(
-#     Output("img_light", "src"),
-#     Input("click_light", "n_clicks")
-# )
+@callback(
+    Output("img_light", "src"),
+    Input("click_light", "on")
+)
 
-# def click_counter(n_clicks):
-#     return f"The html.Div above has been clicked this many times: {n_clicks}"
-
-# def toggle_led(n_clicks):
-#     if GPIO.input(led_pin) == GPIO.LOW:
-#         GPIO.output(led_pin, GPIO.HIGH)
-#         return 'assets/images/LightOn.PNG'
-#     elif GPIO.input(led_pin) == GPIO.HIGH:
-#         GPIO.output(led_pin, GPIO.LOW)
-#         return 'assets/images/LightOff.PNG'
+def toggle_led(on):
+    if on == True:
+        led.switchLight(True)
+        return 'assets/images/LightOn.PNG'
+    else:
+        led.switchLight(False)
+        return 'assets/images/LightOff.PNG'
 
 # Phase 2
 @callback(
-    Output("status_email_sent", "children"),
-    Input("sending_email", "n_clicks")
+    Output("status_fan", "className"),
+    Input("TempGauge", "value")
 )
 
-def sending_email(n_clicks):
-    if send_email(subject, message, sender_email, sender_password, receiver_email) == True:
-        print("wait a bit")
-        time.sleep(30)
-        print("proceed to read email")
-        if receive_email() == True:
-            return 'Email sent successfully and User said Yes!'
+def checkTemp(value):
+    # count = 0
+    global count
+    global FAN_STATUS
+    print(count)
+    print(FAN_STATUS)
+    if value >= 24 and count == 0:
+        count = 1
+        print(count)
+        print('send email')
+        
+        message = f'The current temperature is {value:.2f}°C. Would you like to turn on the fan?'
+        if send_email(subject, message, sender_email, sender_password, receiver_email) == True:
+            # will have to find a way to stop the sending message waiting for a reply
+            print("wait a 30 seconds")
+            time.sleep(30)
+
+            print("proceed to read email")
+            if receive_email() == True:
+                print ('Email sent successfully and User said Yes!')
+                print('change fan status')
+                FAN_STATUS = True
+                count = 0
+                # return toggle_fan(True)
+            else:
+                print('Email sent successfully and User said No!') 
+                print('change fan status')  
+                count = 0
+                FAN_STATUS = False
+                # return toggle_fan(False)
         else:
-            return 'Email sent successfully and User said No!'
+            print('Email sending failed!')
+            count = 0
+            FAN_STATUS = False
+            # return toggle_fan(False)
+        
+    print(FAN_STATUS)
+    motor.switchMotor(FAN_STATUS)
+    return toggle_fan(FAN_STATUS)
+
+def toggle_fan(fan_status):
+    if fan_status == True:
+        # return 'Fan Status: ON'
+        return 'Fan_On'
     else:
-        return 'Email sending failed!'
+        # return 'Fan Status: OFF'
+        return 'Fan_Off'
 
 def send_email(subject, message, sender_email, sender_password, receiver_email):
 # Configure your email settings here
@@ -252,38 +290,22 @@ def receive_email():
                 if first_line.strip().lower() == "yes":
                     print("User accepts")
                     #Turn on the motor
-                    GPIO.output(MOTOR_PIN, GPIO.HIGH)
-                    MOTOR_STATUS = True
+                    # GPIO.output(MOTOR_PIN, GPIO.HIGH)
+                    # MOTOR_STATUS = True
                     return True
                 else:
                     print("User declined")
                     #Turn off the motor
-                    GPIO.output(MOTOR_PIN, GPIO.LOW)
-                    MOTOR_STATUS = False
+                    # GPIO.output(MOTOR_PIN, GPIO.LOW)
+                    # MOTOR_STATUS = False
                     return False
     imap.close()
 
 @callback(
-    # Output("status_email_sent", "children"),
-    # Input("HumiTemp_read", "n_clicks")
-    # Output('humidity', 'children'),
-    # Output('temperature', 'children'),
-    Output('HumGauge', 'value'),
     Output('TempGauge', 'value'),
-
+    Output('HumGauge', 'value'),
     Input('interval-component', 'n_intervals')
 )
-
-# def update_sensor_data(n_intervals):
-#     humidity, temperature = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
-#     if humidity is not None and temperature is not None:
-#         return f'Humidity: {humidity:.2f}%', f'Temperature: {temperature:.2f}°C'
-#     else:
-#         return 'Failed to read data', 'Failed to read data'
-    
-# def read_temperature_humidity():
-#     humidity, temperature = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
-#     return humidity, temperature
 
 def update_sensor_data(n_intervals):
     dht = DHT.DHT(DHT_PIN)
@@ -294,10 +316,8 @@ def update_sensor_data(n_intervals):
             break
     print(f'Humidity: {dht.humidity:.2f}%')
     print(f'Temperature: {dht.temperature:.2f}°C')
-    # return f'Humidity: {dht.humidity:.2f}%', f'Temperature: {dht.temperature:.2f}°C'
-    # return f'Humidity: {temperature}%', f'Temperature: {humidity}°C'
-    # return temperature, humidity
-    return int(f'{dht.humidity:.2f}'), int(f'{dht.temperature:.2f}')
+    # return int(f'{dht.humidity:.2f}'), int(f'{dht.temperature:.2f}')
+    return dht.temperature, dht.humidity
 
 # run app
 if __name__ == '__main__':
