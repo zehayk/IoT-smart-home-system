@@ -24,7 +24,8 @@ import imaplib
 # Setup DHT11
 # DHT_SENSOR = Adafruit_DHT.DHT11
 DHT_PIN = 11 # GPIO pin for DHT sensor
-FAN_STATUS = False # Initially, fan is off
+MOTOR_PIN = 17  # GPIO pin for the motor (replace with the actual pin number)
+MOTOR_STATUS = False  # Initially, the motor is off
 
 humidity = 0
 temperature = 0 
@@ -250,9 +251,15 @@ def receive_email():
                 # check if the response is yes 
                 if first_line.strip().lower() == "yes":
                     print("User accepts")
+                    #Turn on the motor
+                    GPIO.output(MOTOR_PIN, GPIO.HIGH)
+                    MOTOR_STATUS = True
                     return True
                 else:
                     print("User declined")
+                    #Turn off the motor
+                    GPIO.output(MOTOR_PIN, GPIO.LOW)
+                    MOTOR_STATUS = False
                     return False
     imap.close()
 
