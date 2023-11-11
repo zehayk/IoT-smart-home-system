@@ -1,4 +1,5 @@
 from dash import Dash, html, callback, Input, Output, dcc
+from datetime import datetime
 # import dash_dangerously_set_inner_html
 import dash_daq as daq
 import RPi.GPIO as GPIO
@@ -18,6 +19,8 @@ import imaplib
 from LED import LED 
 led_pin = 16
 led = LED(led_pin, False)
+#LED pin for Light Intensity
+led_pin2 = 17
 
 # Setup DHT11
 DHT_PIN = 12 # GPIO pin for DHT sensor
@@ -172,7 +175,7 @@ def toggle_led(on):
 @callback(
     Output("status_fan", "className"),
     Input("TempGauge", "value")
-)
+)           
 
 def checkTemp(value):
     # count = 0
@@ -318,6 +321,49 @@ def update_sensor_data(n_intervals):
     print(f'Temperature: {dht.temperature:.2f}°C')
     # return int(f'{dht.humidity:.2f}'), int(f'{dht.temperature:.2f}')
     return dht.temperature, dht.humidity
+
+
+#Phase 3
+def setup_gpio():
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(led_pin2, GPIO.OUT)
+    GPIO.output(led_pin2, GPIO.LOW)
+
+def turn_on_led():
+    GPIO.output(led_pin2, GPIO.HIGH)
+
+def turn_off_led():
+    GPIO.output(led_pin2, GPIO.LOW)
+
+def checkIntensity(value):
+    global count
+
+    if value < 400 and count == 0:
+        count = 1
+        print("Light is ON")
+        turn_on_led()
+
+        current_time = datetime.now().strftime("%H:%M")
+        subject = f"The Light is ON at {current_time} time."
+        message = f"The light turned on at {current_time} time due to low intensity."
+
+        if send_email(subject, message, sender_email, sender_password, receiver_email):
+            print("Email sent successfully")
+            # Add a delay to avoid sending multiple emails in a short time
+            time.sleep(30)
+        else:
+            print("Email sending failed!")
+
+    elif value >= 400 and count == 1:
+        count = 0
+        print("Light is OFF")
+        turn_off_led()
+
+setup_gpio()
+
+# Replace this with your actual light intensity reading
+light_intensity_value = 300
+checkIntensity(light_intensity_value)
 
 # run app
 if __name__ == '__main__':

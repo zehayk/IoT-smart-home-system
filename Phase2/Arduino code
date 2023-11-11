@@ -1,0 +1,137 @@
+//Basic Libraries for ESP and MQTT
+#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
+//Sending email notifications Library
+#include <ESP8266SMTP.h>
+
+const char* ssid = "SSID";
+const char* password = "Password";
+
+// WiFi and MQTT settings
+const char* mqttServer = "YourRPiIP";
+const int mqttPort = 1883;
+const char* mqttUser = "YourMQTTUsername";
+const char* mqttPassword = "YourMQTTPassword";
+
+//Topics
+const char* lightIntensityTopic = "sensors/light/intensity";
+const char* lightStatusTopic = "sensors/light/light_status";
+
+// Analog pin for the photoresistor
+const int photoresistorPin = A0;
+// Digital pin for the LED
+const int ledPin = D1;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+SMTPClient smtp;
+
+bool isLightOn = false;
+
+void setup_wifi() {
+
+    delay(10);
+    // We start by connecting to a WiFi network
+    Serial.println();
+    Serial.print("Connecting to ");
+    Serial.println(ssid);
+    WiFi.begin(ssid, password);
+
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+
+    Serial.println("");
+    Serial.print("WiFi connected - ESP-8266 IP address: ");
+    Serial.println(WiFi.localIP());
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+    // Handle incoming MQTT messages
+    if (strcmp(topic, lightStatusTopic) == 0) {
+        if (payload[0] == '1') {
+            // Turn on the LED
+            digitalWrite(ledPin, HIGH);
+            isLightOn = true;
+        } else if (payload[0] == '0') {
+            // Turn off the LED
+            digitalWrite(ledPin, LOW);
+            isLightOn = false;
+        }
+    }
+}
+
+void reconnect() {
+    while (!client.connected()) {
+        Serial.print("Attempting MQTT connection...");
+        if (client.connect("espClient", mqttUser, mqttPassword)) {
+            Serial.println("Connected to MQTT broker");
+            // Subscribe to the light status topic
+            client.subscribe(lightStatusTopic); 
+ 
+        } else {
+            Serial.print("MQTT Connection failed, rc=");
+            Serial.print(client.state());
+            Serial.println("Retrying in 5 seconds");
+            // Wait 5 seconds before retrying
+            delay(5000);
+        }
+    }
+}
+
+void sendLightOnEmailNotification() {
+    char emailSubject[50];
+    char emailBody[100];
+
+    sprintf(emailSubject, "Light is ON at %02d:%02d time", hour(), minute());
+    sprintf(emailBody, "The light turned on at %02d:%02d time due to low intensity.", hour(), minute());
+
+    if (smtp.send("YourEmail@gmail.com", "RecipientEmail@gmail.com", emailSubject, emailBody)) {
+        Serial.println("Email sent successfully");
+    } else {
+        Serial.println("Email sending failed");
+    }
+}
+
+void setup() {
+ 
+    Serial.begin(115200);
+    setup_wifi();
+    client.setServer(mqtt_server, mqttPort);
+    client.setCallback(callback);
+    pinMode(ledPin, OUTPUT);
+}
+void loop() {
+    if (!client.connected()) {
+        reconnect();
+    }
+    client.loop();
+
+    // Read the photoresistor value and convert it to light intensity
+    int photoresistorValue = analogRead(photoresistorPin);
+    float lightIntensity = map(photoresistorValue, 0, 1023, 0, 100); 
+
+    // Publish the light intensity to the MQTT server
+    String lightIntensityStr = String(lightIntensity, 2);
+    client.publish(lightIntensityTopic, lightIntensityStr.c_str());
+
+     if (lightIntensity < 400) {
+        if (!isLightOn) {
+            digitalWrite(ledPin, HIGH); // Turn on the LED
+            // Send MQTT message to indicate that the light is ON
+            client.publish(lightStatusTopic, "1");
+            sendLightOnEmailNotification();
+            isLightOn = true;
+        }
+    } else {
+        if (isLightOn) {
+            digitalWrite(ledPin, LOW); // Turn off the LED
+            // Send MQTT message to indicate that the light is ON
+            client.publish(lightStatusTopic, "0");
+            isLightOn = false;
+        }
+    }
+
+    delay(5000); // Adjust the delay as needed
+}
