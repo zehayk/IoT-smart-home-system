@@ -5,9 +5,9 @@
 int sensorVal = 0;
 const int ANALOG_READ_PIN = A0; 
 
-const char* ssid = "BELL566";
-const char* password = "D97132A5F792";
-const char* mqtt_server = "192.168.2.31"; 
+const char* ssid = "wifi";
+const char* password = "pass";
+const char* mqtt_server = "rpi"; 
 WiFiClient vanieriot;
 PubSubClient client(vanieriot); 
 
