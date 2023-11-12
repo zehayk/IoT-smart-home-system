@@ -8,19 +8,25 @@ from time import sleep
 import Freenove_DHT as DHT
 # import board
 
+# sending email
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+# reading email
 import email
 import imaplib
+
+# mqtt
+import paho.mqtt.subscribe as subscribe
 
 # Setup LED 
 from LED import LED 
 led_pin = 16
 led = LED(led_pin, False)
+LED_STATUS = False
 #LED pin for Light Intensity
-led_pin2 = 17
+# led_pin2 = 17
 
 # Setup DHT11
 DHT_PIN = 12 # GPIO pin for DHT sensor
@@ -147,6 +153,15 @@ app.layout = html.Div([
                     ),
                     html.Img(src='assets/images/Fan2.PNG', id='status_fan', className="Fan_Off", width="250", height="250"),
                 ]),
+            ]),
+            html.Section(id="", children=[
+                html.H2("Phase 3 - Photoresistor Sensor Data"),
+                html.Div([
+                    html.Div("Light: ", id='light_intensity'),
+                    html.Data(id='light_data', value=0),
+                    html.Div("Status of light:  ", id='status_of_led'),
+                    html.Div("Message:  ", id='sending_email_light'),
+                ]),
                 dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
             ]),
         ]),
@@ -158,18 +173,18 @@ app.layout = html.Div([
 ])
 
 # Phase 1
-@callback(
-    Output("img_light", "src"),
-    Input("click_light", "on")
-)
+# @callback(
+#     Output("img_light", "src"),
+#     Input("click_light", "on")
+# )
 
-def toggle_led(on):
-    if on == True:
-        led.switchLight(True)
-        return 'assets/images/LightOn.PNG'
-    else:
-        led.switchLight(False)
-        return 'assets/images/LightOff.PNG'
+# def toggle_led(on):
+#     if on == True:
+#         led.switchLight(True)
+#         return 'assets/images/LightOn.PNG'
+#     else:
+#         led.switchLight(False)
+#         return 'assets/images/LightOff.PNG'
 
 # Phase 2
 @callback(
@@ -322,26 +337,34 @@ def update_sensor_data(n_intervals):
     # return int(f'{dht.humidity:.2f}'), int(f'{dht.temperature:.2f}')
     return dht.temperature, dht.humidity
 
-
 #Phase 3
-def setup_gpio():
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(led_pin2, GPIO.OUT)
-    GPIO.output(led_pin2, GPIO.LOW)
+@callback( 
+    Output('status_of_led', 'children'),
+    Input('light_data', 'value'),
+)
 
-def turn_on_led():
-    GPIO.output(led_pin2, GPIO.HIGH)
+# def setup_gpio():
+#     GPIO.setmode(GPIO.BCM)
+#     GPIO.setup(led_pin2, GPIO.OUT)
+#     GPIO.output(led_pin2, GPIO.LOW)
 
-def turn_off_led():
-    GPIO.output(led_pin2, GPIO.LOW)
+# def turn_on_led():
+#     GPIO.output(led_pin2, GPIO.HIGH)
+
+# def turn_off_led():
+#     GPIO.output(led_pin2, GPIO.LOW)
 
 def checkIntensity(value):
     global count
+    global LED_STATUS
+    light_value = int(value)
+    # print(light_value)
 
-    if value < 400 and count == 0:
+    if light_value < 400 and count == 0:
         count = 1
         print("Light is ON")
-        turn_on_led()
+        led.turn_on_led()
+        LED_STATUS = True
 
         current_time = datetime.now().strftime("%H:%M")
         subject = f"The Light is ON at {current_time} time."
@@ -354,16 +377,43 @@ def checkIntensity(value):
         else:
             print("Email sending failed!")
 
-    elif value >= 400 and count == 1:
+    elif light_value >= 400 and count == 1:
         count = 0
         print("Light is OFF")
-        turn_off_led()
+        led.turn_off_led()
+        LED_STATUS = False
+    
+    return status_LED(LED_STATUS)
 
-setup_gpio()
+# setup_gpio()
+
+def status_LED(LED_STATUS):
+    if (LED_STATUS == True):
+        return "Status of light: LED is on and Email has been sent"
+    else:
+        return "Status of light: LED is off"
 
 # Replace this with your actual light intensity reading
-light_intensity_value = 300
-checkIntensity(light_intensity_value)
+# light_intensity_value = 300
+# checkIntensity(light_intensity_value)
+@callback(
+    Output('light_intensity', 'children'),
+    Output('light_data', 'value'),
+    Input('interval-component', 'n_intervals')
+)
+
+def getDatafromArduino(n_intervals):
+    msg = subscribe.simple("sensors/light/intensity")
+    # print("%s %s" % (msg.topic, msg.payload))
+    bytes_val = msg.payload
+
+    str_value = str(bytes_val)
+    lenghtOfVal = len(str_value) - 1
+    light_value = int(str(bytes_val)[2:lenghtOfVal])
+
+    str_lightvalue = str(light_value)
+    # print(light_value)
+    return light_value, str_lightvalue
 
 # run app
 if __name__ == '__main__':

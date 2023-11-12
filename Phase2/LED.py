@@ -26,3 +26,9 @@ class LED():
             GPIO.output(self.led_pin, GPIO.HIGH)
         else: 
             GPIO.output(self.led_pin, GPIO.LOW)
+
+    def turn_on_led(self):
+        GPIO.output(self.led_pin, GPIO.HIGH)
+
+    def turn_off_led(self): 
+        GPIO.output(self.led_pin, GPIO.LOW)
