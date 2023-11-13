@@ -25,6 +25,7 @@ from LED import LED
 led_pin = 16
 led = LED(led_pin, False)
 LED_STATUS = False
+lightCount = 0
 
 max_brightness = 600
 #LED pin for Light Intensity
@@ -35,7 +36,7 @@ DHT_PIN = 12 # GPIO pin for DHT sensor
 FAN_STATUS = False # Initially, the motor is off
 humidity = 0
 temperature = 0 
-count = 0
+tempCount = 0
 
 # Setup Motor
 from DC_Motor import DC_Motor 
@@ -183,8 +184,9 @@ app.layout = html.Div([
 )
 
 def set_brightness_image(n_intervals, value):
-    print("NIGGGER")
-    return {'filter': f'brightness({int((value * 100) / max_brightness)}%)'}
+    # print("NIGGGER")
+    currrent_brightness = ((int(value) * 100) / max_brightness)
+    return {'filter': f'brightness({currrent_brightness}%)'}
 
 # Phase 1
 # @callback(
@@ -208,13 +210,13 @@ def set_brightness_image(n_intervals, value):
 
 def checkTemp(value):
     # count = 0
-    global count
+    global tempCount
     global FAN_STATUS
-    print(count)
+    print(tempCount)
     print(FAN_STATUS)
-    if value >= 24 and count == 0:
-        count = 1
-        print(count)
+    if value >= 24 and tempCount == 0:
+        tempCount = 1
+        print(tempCount)
         print('send email')
         
         message = f'The current temperature is {value:.2f}°C. Would you like to turn on the fan?'
@@ -228,19 +230,24 @@ def checkTemp(value):
                 print ('Email sent successfully and User said Yes!')
                 print('change fan status')
                 FAN_STATUS = True
-                count = 0
+                # count = 0
                 # return toggle_fan(True)
             else:
                 print('Email sent successfully and User said No!') 
                 print('change fan status')  
-                count = 0
+                tempCount = 0
                 FAN_STATUS = False
                 # return toggle_fan(False)
         else:
             print('Email sending failed!')
-            count = 0
+            tempCount = 0
             FAN_STATUS = False
             # return toggle_fan(False)
+
+    elif value < 24 and tempCount == 1:
+        tempCount = 0
+        print("Temperature gone down")
+        FAN_STATUS = False
         
     print(FAN_STATUS)
     motor.switchMotor(FAN_STATUS)
@@ -369,13 +376,13 @@ def update_sensor_data(n_intervals):
 #     GPIO.output(led_pin2, GPIO.LOW)
 
 def checkIntensity(value):
-    global count
+    global lightCount
     global LED_STATUS
     light_value = int(value)
     # print(light_value)
 
-    if light_value < 400 and count == 0:
-        count = 1
+    if light_value < 400 and lightCount == 0:
+        lightCount = 1
         print("Light is ON")
         led.turn_on_led()
         LED_STATUS = True
@@ -391,8 +398,8 @@ def checkIntensity(value):
         else:
             print("Email sending failed!")
 
-    elif light_value >= 400 and count == 1:
-        count = 0
+    elif light_value >= 400 and lightCount == 1:
+        lightCount = 0
         print("Light is OFF")
         led.turn_off_led()
         LED_STATUS = False
