@@ -21,10 +21,12 @@ import imaplib
 import paho.mqtt.subscribe as subscribe
 
 # Setup LED 
-from LED import LED 
+from LED import LED
 led_pin = 16
 led = LED(led_pin, False)
 LED_STATUS = False
+
+max_brightness = 600
 #LED pin for Light Intensity
 # led_pin2 = 17
 
@@ -161,6 +163,7 @@ app.layout = html.Div([
                     html.Data(id='light_data', value=0),
                     html.Div("Status of light:  ", id='status_of_led'),
                     html.Div("Message:  ", id='sending_email_light'),
+                    html.Img(src='assets/images/sun.png', id='room_brightness', width="250", height="250", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
                 ]),
                 dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
             ]),
@@ -171,6 +174,17 @@ app.layout = html.Div([
         ]),
     ]),
 ])
+
+
+@callback(
+    Output("room_brightness", "style"),
+    Input('interval-component', 'n_intervals'),
+    Input("light_data", "value")
+)
+
+def set_brightness_image(n_intervals, value):
+    print("NIGGGER")
+    return {'filter': f'brightness({int((value * 100) / max_brightness)}%)'}
 
 # Phase 1
 # @callback(
@@ -338,7 +352,7 @@ def update_sensor_data(n_intervals):
     return dht.temperature, dht.humidity
 
 #Phase 3
-@callback( 
+@callback(
     Output('status_of_led', 'children'),
     Input('light_data', 'value'),
 )
