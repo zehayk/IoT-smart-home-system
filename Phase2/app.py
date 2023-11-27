@@ -6,8 +6,8 @@ import dash_daq as daq
 import RPi.GPIO as GPIO
 import time
 from time import sleep
-import pydash
-import bluetooth
+# import pydash
+# import bluetooth
 import Freenove_DHT as DHT
 # import board
 
@@ -21,7 +21,15 @@ import email
 import imaplib
 
 # mqtt
-import paho.mqtt.subscribe as subscribe
+# import paho.mqtt.subscribe as subscribe
+from MQTT import Controller
+mqtt_server = 'yourIP' #Add your IP to connect to MQTT server
+topicLightIntensity = "sensors/light/intensity"
+topicRfid = "sensors/rfid/id"
+light_controller = Controller(mqtt_server, topicLightIntensity)
+rfid_controller = Controller(mqtt_server, topicRfid)
+light_controller.start()
+rfid_controller.start()
 
 # Setup LED 
 from LED import LED
@@ -109,16 +117,26 @@ app.layout = html.Div([
             dcc.Link("Controls", href="#controls", style={'color': '#ecf0f1', 'margin': '0 1em'}),
         ]),
         html.Main([
-            html.Section(id="lightswitch", children=[
-                html.H2("Phase 1 - Light Switch"),
-
+            html.Section(id="profile", children=[
+                html.H2("Phase 4 - RFID and Database"),
                 html.Div(children=[
-                    # daq.ToggleSwitch(id="click-light", on=False),
-                    html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                    html.Div("ID: ", id='User_ID'),
+                    html.Div("NAME: ", id='User_NAME'),
+                    html.Div("Temperature: ", id='User_TEMP'),
+                    html.Div("Humidity: ", id='User_HUM'),
+                    html.Div("Light Intensity: ", id='User_LIGHT'),
                 ]),
-                # html.Button('Switch Light', id='click_light', n_clicks=0),
-                daq.BooleanSwitch(id='click_light', on=False),
             ]),
+            # html.Section(id="lightswitch", children=[
+            #     html.H2("Phase 1 - Light Switch"),
+
+            #     html.Div(children=[
+            #         # daq.ToggleSwitch(id="click-light", on=False),
+            #         html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+            #     ]),
+            #     # html.Button('Switch Light', id='click_light', n_clicks=0),
+            #     daq.BooleanSwitch(id='click_light', on=False),
+            # ]),
             # html.Section(id="email", children=[
                 # html.H2("Phase 2 - Email"),
                 # html.Div([
@@ -168,6 +186,7 @@ app.layout = html.Div([
                     html.Div("Status of light:  ", id='status_of_led'),
                     html.Div("Message:  ", id='sending_email_light'),
                     html.Img(src='assets/images/sun.png', id='room_brightness', width="250", height="250", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
+                    html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
                 ]),
                 dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
             ]),
@@ -433,67 +452,106 @@ def status_LED(LED_STATUS):
     Input('interval-component', 'n_intervals')
 )
 
-def getDatafromArduino(n_intervals):
-    msg = subscribe.simple("sensors/light/intensity")
-    # print("%s %s" % (msg.topic, msg.payload))
-    bytes_val = msg.payload
-
-    str_value = str(bytes_val)
-    lenghtOfVal = len(str_value) - 1
-    light_value = int(str(bytes_val)[2:lenghtOfVal])
-
-    str_lightvalue = str(light_value)
-    # print(light_value)
-    return light_value, str_lightvalue
+def getDataLightfromArduino(n_intervals):
+    lightvalue = light_controller.getLightInensity()
+    strlightvalue = str(lightvalue)
+    # print(f'light: {lightvalue}')
+    return lightvalue, strlightvalue
 
 # Phase 4 
-class BluetoothScanner:
-    def __init__(self):
-        self.devices = set()
-        self.scan_duration = 20  # Increase scan duration if nothing found
-        self.rssi_threshold = -70  # Adjusted RSSI threshold if nothing found
+@app.callback(
+    Output('User_ID', 'children'),
+    Output('User_NAME', 'children'),
+    Output('User_TEMP', 'children'),
+    Output('User_HUM', 'children'),
+    Output('User_LIGHT', 'children'),
+    Input('interval-component', 'n_intervals')
+)
 
-    def scan_devices(self):
-        nearby_devices = bluetooth.discover_devices(
-            duration=self.scan_duration,
-            lookup_names=True,
-            lookup_class=True,
-            device_id=-1
-        )
+def getDataUserfromArduino(n_intervals):
+    rfidvalue = rfid_controller.getRfidId()
+    strRfidValue = str(rfidvalue)
+    print(f'rfid ID: {rfidvalue}')
 
-        print("Nearby devices:", nearby_devices)
+    # print('HELLOOOO')
+    userData = getUserData(strRfidValue)
+    # print('HIII')
+    if len(userData) == 0:
+        # print('HUH?!?!?!')
+        return 'ID: ', 'Name: ', 'Temperature: ', 'Humidity: ', 'Light Intensity: '
+    else:
+        id = userData[0][0]
+        name = userData[0][1]
+        temp = userData[0][2]
+        hum = userData[0][3]
+        light = userData[0][4]
 
-        self.devices = pydash.filter_(nearby_devices, lambda device: device[2] > self.rssi_threshold)
-        return len(self.devices)
+        print(userData)
 
-scanner = BluetoothScanner()
+        id_display = f'ID: {id}'
+        name_display = f'Name: {name}'
+        temp_display = f'Temperature: {temp}'
+        hum_display = f'Humidity: {hum}'
+        light_display = f'Light Intensity: {light}'
+        return id_display, name_display, temp_display, hum_display, light_display
+
+def getUserData(rfidID):
+    return rfid_controller.getDisplayData(rfidID)
+
+
+
+
+
+
+
+
+# class BluetoothScanner:
+#     def __init__(self):
+#         self.devices = set()
+#         self.scan_duration = 20  # Increase scan duration if nothing found
+#         self.rssi_threshold = -70  # Adjusted RSSI threshold if nothing found
+
+#     def scan_devices(self):
+#         nearby_devices = bluetooth.discover_devices(
+#             duration=self.scan_duration,
+#             lookup_names=True,
+#             lookup_class=True,
+#             device_id=-1
+#         )
+
+#         print("Nearby devices:", nearby_devices)
+
+#         self.devices = pydash.filter_(nearby_devices, lambda device: device[2] > self.rssi_threshold)
+#         return len(self.devices)
+
+# scanner = BluetoothScanner()
 
 
 # Thread for Bluetooth scanning
-def scan_loop():
-    try:
-        while True:
-            num_devices = scanner.scan_devices()
-            time.sleep(5)
-            print(f"Number of Bluetooth-enabled devices nearby: {num_devices}")
-    except Exception as e:
-        print(f"Error in scan_loop: {str(e)}")
+# def scan_loop():
+#     try:
+#         while True:
+#             num_devices = scanner.scan_devices()
+#             time.sleep(5)
+#             print(f"Number of Bluetooth-enabled devices nearby: {num_devices}")
+#     except Exception as e:
+#         print(f"Error in scan_loop: {str(e)}")
 
-# Thread instantiation after the function definition
-scan_thread = Thread(target=scan_loop)
-scan_thread.daemon = True  # Set the thread as a daemon
-scan_thread.start()
+# # Thread instantiation after the function definition
+# scan_thread = Thread(target=scan_loop)
+# scan_thread.daemon = True  # Set the thread as a daemon
+# scan_thread.start()
 
-@app.callback(
-    [Output('bluetooth_devices', 'children'),
-     Output('rssi_threshold', 'children')],
-    Input('interval-component', 'n_intervals')
-)
-def update_bluetooth_devices(n_intervals):
-    # Update the dashboard with the number of Bluetooth devices and RSSI threshold
-    num_devices = scanner.scan_devices()
-    return (f"Number of Bluetooth devices nearby: {num_devices}",
-            f"RSSI Threshold: {scanner.rssi_threshold} dBm")
+# @app.callback(
+#     [Output('bluetooth_devices', 'children'),
+#      Output('rssi_threshold', 'children')],
+#     Input('interval-component', 'n_intervals')
+# )
+# def update_bluetooth_devices(n_intervals):
+#     # Update the dashboard with the number of Bluetooth devices and RSSI threshold
+#     num_devices = scanner.scan_devices()
+#     return (f"Number of Bluetooth devices nearby: {num_devices}",
+#             f"RSSI Threshold: {scanner.rssi_threshold} dBm")
 
 
 # run app
