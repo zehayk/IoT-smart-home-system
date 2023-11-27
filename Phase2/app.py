@@ -1,10 +1,13 @@
 from dash import Dash, html, callback, Input, Output, dcc
+from threading import Thread
 from datetime import datetime
 # import dash_dangerously_set_inner_html
 import dash_daq as daq
 import RPi.GPIO as GPIO
 import time
 from time import sleep
+import pydash
+import bluetooth
 import Freenove_DHT as DHT
 # import board
 
@@ -168,6 +171,13 @@ app.layout = html.Div([
                 ]),
                 dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
             ]),
+            html.Section(id="", children=[
+				html.H2("Bluetooth Devices"),
+				html.Div([
+					html.P(f"Number of Bluetooth devices nearby: {0}", id='bluetooth_devices'),
+					html.P(f"RSSI Threshold: ", id='rssi_threshold'),
+				]),  
+			]),
         ]),
         # Footer
         html.Footer([
@@ -435,6 +445,56 @@ def getDatafromArduino(n_intervals):
     str_lightvalue = str(light_value)
     # print(light_value)
     return light_value, str_lightvalue
+
+# Phase 4 
+class BluetoothScanner:
+    def __init__(self):
+        self.devices = set()
+        self.scan_duration = 20  # Increase scan duration if nothing found
+        self.rssi_threshold = -70  # Adjusted RSSI threshold if nothing found
+
+    def scan_devices(self):
+        nearby_devices = bluetooth.discover_devices(
+            duration=self.scan_duration,
+            lookup_names=True,
+            lookup_class=True,
+            device_id=-1
+        )
+
+        print("Nearby devices:", nearby_devices)
+
+        self.devices = pydash.filter_(nearby_devices, lambda device: device[2] > self.rssi_threshold)
+        return len(self.devices)
+
+scanner = BluetoothScanner()
+
+
+# Thread for Bluetooth scanning
+def scan_loop():
+    try:
+        while True:
+            num_devices = scanner.scan_devices()
+            time.sleep(5)
+            print(f"Number of Bluetooth-enabled devices nearby: {num_devices}")
+    except Exception as e:
+        print(f"Error in scan_loop: {str(e)}")
+
+# Thread instantiation after the function definition
+scan_thread = Thread(target=scan_loop)
+scan_thread.daemon = True  # Set the thread as a daemon
+scan_thread.start()
+
+@app.callback(
+    [Output('bluetooth_devices', 'children'),
+     Output('rssi_threshold', 'children')],
+    Input('interval-component', 'n_intervals')
+)
+def update_bluetooth_devices(n_intervals):
+    # Update the dashboard with the number of Bluetooth devices and RSSI threshold
+    num_devices = scanner.scan_devices()
+    return (f"Number of Bluetooth devices nearby: {num_devices}",
+            f"RSSI Threshold: {scanner.rssi_threshold} dBm")
+
 
 # run app
 if __name__ == '__main__':
