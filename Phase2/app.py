@@ -191,12 +191,11 @@ app.layout = html.Div([
                 dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
             ]),
             html.Section(id="", children=[
-				html.H2("Bluetooth Devices"),
-				html.Div([
-					html.P(f"Number of Bluetooth devices nearby: {0}", id='bluetooth_devices'),
-					html.P(f"RSSI Threshold: ", id='rssi_threshold'),
-				]),  
-			]),
+                html.H2("Bluetooth Devices"),
+                html.H1("Total nearby Bluetooth devices:"),
+                html.Div("Total nearby Bluetooth devices: N/A", id='bluetoothDiv'),
+                html.Button('Submit', id='bluetoothbtn', n_clicks=0),
+            ]),
         ]),
         # Footer
         html.Footer([
@@ -498,60 +497,24 @@ def getDataUserfromArduino(n_intervals):
 def getUserData(rfidID):
     return rfid_controller.getDisplayData(rfidID)
 
+# Phase 4 - Bluetooth
+@app.callback(
+    Output("bluetoothDiv", "children"),
+    Input('bluetoothbtn', 'n_clicks'),
+    prevent_initial_call=True
+)
 
-
-
-
-
-
-
-# class BluetoothScanner:
-#     def __init__(self):
-#         self.devices = set()
-#         self.scan_duration = 20  # Increase scan duration if nothing found
-#         self.rssi_threshold = -70  # Adjusted RSSI threshold if nothing found
-
-#     def scan_devices(self):
-#         nearby_devices = bluetooth.discover_devices(
-#             duration=self.scan_duration,
-#             lookup_names=True,
-#             lookup_class=True,
-#             device_id=-1
-#         )
-
-#         print("Nearby devices:", nearby_devices)
-
-#         self.devices = pydash.filter_(nearby_devices, lambda device: device[2] > self.rssi_threshold)
-#         return len(self.devices)
-
-# scanner = BluetoothScanner()
-
-
-# Thread for Bluetooth scanning
-# def scan_loop():
-#     try:
-#         while True:
-#             num_devices = scanner.scan_devices()
-#             time.sleep(5)
-#             print(f"Number of Bluetooth-enabled devices nearby: {num_devices}")
-#     except Exception as e:
-#         print(f"Error in scan_loop: {str(e)}")
-
-# # Thread instantiation after the function definition
-# scan_thread = Thread(target=scan_loop)
-# scan_thread.daemon = True  # Set the thread as a daemon
-# scan_thread.start()
-
-# @app.callback(
-#     [Output('bluetooth_devices', 'children'),
-#      Output('rssi_threshold', 'children')],
-#     Input('interval-component', 'n_intervals')
-# )
-# def update_bluetooth_devices(n_intervals):
-#     # Update the dashboard with the number of Bluetooth devices and RSSI threshold
-#     num_devices = scanner.scan_devices()
-#     return (f"Number of Bluetooth devices nearby: {num_devices}",
-#             f"RSSI Threshold: {scanner.rssi_threshold} dBm")
+def update_bluetooth_device_count(toggle_value):
+    print("Scanning for nearby bluetooth devices...")
+    scanner = Scanner()
+    devices = scanner.scan(10.0)
+    num_devices = 0
+    
+    for device in devices:
+        if (device.rssi > -100 and device.rssi < -75):
+            num_devices += 1
+            
+    return num_devices
 
 
 # run app
