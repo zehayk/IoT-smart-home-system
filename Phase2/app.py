@@ -124,109 +124,116 @@ app.layout = html.Div([
             dcc.Link("Controls", href="#controls", style={'color': '#ecf0f1', 'margin': '0 1em'}),
         ]),
         html.Main([
-            html.Section(id="profile", children=[
-                html.H2("Phase 4 - RFID and Database"),
-                html.Div(children=[
-                    html.Div("ID: ", id='User_ID'),
-                    html.Div("Name: ", id='User_NAME'),
-                    html.Div("Email: ", id='User_EMAIL'),
-                    html.Div("Card ID: ", id='User_CARDID'),
-                    html.Div("Temperature: ", id='User_TEMP'),
-                    html.Div("Humidity: ", id='User_HUM'),
-                    html.Div("Light Intensity: ", id='User_LIGHT'),
-                    html.Img(src='assets/images/defaultpfp.jpg', id='User_PHOTO', width="100", height="100"),
+            html.Div([
+                html.Section(id="profile", children=[
+                    html.H2("Phase 4 - RFID and Database"),
+                    html.Div(children=[
+                        html.Div("ID: ", id='User_ID'),
+                        html.Div("Name: ", id='User_NAME'),
+                        html.Div("Email: ", id='User_EMAIL'),
+                        html.Div("Card ID: ", id='User_CARDID'),
+                        html.Div("Temperature: ", id='User_TEMP'),
+                        html.Div("Humidity: ", id='User_HUM'),
+                        html.Div("Light Intensity: ", id='User_LIGHT'),
+                        html.Img(src='assets/images/defaultpfp.jpg', id='User_PHOTO', width="100", height="100"),
+                    ]),
                 ]),
-            ]),
-            # html.Section(id="lightswitch", children=[
-            #     html.H2("Phase 1 - Light Switch"),
+                # html.Section(id="lightswitch", children=[
+                #     html.H2("Phase 1 - Light Switch"),
 
-            #     html.Div(children=[
-            #         # daq.ToggleSwitch(id="click-light", on=False),
-            #         html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
-            #     ]),
-            #     # html.Button('Switch Light', id='click_light', n_clicks=0),
-            #     daq.BooleanSwitch(id='click_light', on=False),
-            # ]),
-            # html.Section(id="email", children=[
-                # html.H2("Phase 2 - Email"),
-                # html.Div([
-                # daq.ToggleSwitch(id="click-light", on=False),
-                # html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
-                # html.Div(children='Phase 2'),
-                # html.P("Press Button below to send email about temperature!"),
-                # html.Div(children='status email', id='status_email_sent')
-            # ]),
-            # html.Button('Send Email', id='sending_email', n_clicks=0),
-            # ]),
-            html.Section(id="dht11sensor", children=[
-                html.H2("Phase 2 - DHT11 Sensor Data"),
-                html.Div([
-                    # html.Div("Temperature: ", id='temperature'),
-                    # html.Div("Humdity: ", id='humidity'),
-                    daq.Gauge(
-                        color={"gradient":True,"ranges":{"green":[0,6],"yellow":[6,8],"red":[8,10]}},
-                        id="TempGauge",
-                        showCurrentValue=True,
-                        units="Temp " + u'\N{DEGREE SIGN}',
-                        label='Temperature',
-                        max=100,
-                        min=0,
-                        size=200,
-                        value=0,
-                    ),
-                    daq.Gauge(
-                        color={"gradient":True,"ranges":{"white":[0,5],"blue":[5,10]}},
-                        id="HumGauge",
-                        showCurrentValue=True,
-                        units="Hum %",
-                        label='Humidity',
-                        max=100,
-                        min=0,
-                        size=200,
-                        value=0,
-                    ),
-                    html.Img(src='assets/images/Fan2.PNG', id='status_fan', className="Fan_Off", width="250", height="250"),
+                #     html.Div(children=[
+                #         # daq.ToggleSwitch(id="click-light", on=False),
+                #         html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                #     ]),
+                #     # html.Button('Switch Light', id='click_light', n_clicks=0),
+                #     daq.BooleanSwitch(id='click_light', on=False),
+                # ]),
+                # html.Section(id="email", children=[
+                    # html.H2("Phase 2 - Email"),
+                    # html.Div([
+                    # daq.ToggleSwitch(id="click-light", on=False),
+                    # html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                    # html.Div(children='Phase 2'),
+                    # html.P("Press Button below to send email about temperature!"),
+                    # html.Div(children='status email', id='status_email_sent')
+                # ]),
+                # html.Button('Send Email', id='sending_email', n_clicks=0),
+                # ]),
+                html.Section(id="dht11sensor", children=[
+                    html.H2("Phase 2 - DHT11 Sensor Data"),
+                    html.Div([
+                        # html.Div("Temperature: ", id='temperature'),
+                        # html.Div("Humdity: ", id='humidity'),
+                        html.Div([
+                            daq.Gauge(
+                                color={"gradient":True,"ranges":{"green":[0,6],"yellow":[6,8],"red":[8,10]}},
+                                id="TempGauge",
+                                showCurrentValue=True,
+                                units="Temp " + u'\N{DEGREE SIGN}',
+                                label='Temperature',
+                                max=100,
+                                min=0,
+                                size=200,
+                                value=0,
+                            ),
+                            daq.Gauge(
+                                color={"gradient":True,"ranges":{"white":[0,5],"blue":[5,10]}},
+                                id="HumGauge",
+                                showCurrentValue=True,
+                                units="Hum %",
+                                label='Humidity',
+                                max=100,
+                                min=0,
+                                size=200,
+                                value=0,
+                            ),
+                            html.Img(src='assets/images/Fan2.PNG', id='status_fan', className="Fan_Off", width="250", height="250"),
+                        ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
+                    ]),
                 ]),
-            ]),
-            html.Section(id="", children=[
-                html.H2("Phase 3 - Photoresistor Sensor Data"),
-                html.Div([
-                    html.Div("Light: ", id='light_intensity'),
-                    html.Data(id='light_data', value=0),
-                    html.Div("Status of light:  ", id='status_of_led'),
-                    html.Div("Message:  ", id='sending_email_light'),
-                    html.Img(src='assets/images/sun.png', id='room_brightness', width="250", height="250", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
-                    html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+            ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
+
+            html.Div([
+                html.Section(id="", children=[
+                    html.H2("Phase 3 - Photoresistor Sensor Data"),
+                    html.Div([
+                        html.Div("Light: ", id='light_intensity'),
+                        html.Data(id='light_data', value=0),
+                        html.Div("Status of light:  ", id='status_of_led'),
+                        html.Div("Message:  ", id='sending_email_light'),
+                        html.Img(src='assets/images/sun.png', id='room_brightness', width="250", height="250", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
+                        html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                    ]),
+                    dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
                 ]),
-                dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
-            ]),
-            html.Section(id="", children=[
-                html.H2("Bluetooth Devices"),
-    
-                # Blue rectangle container
-                html.Div(
-                    children=[
-                        # Left side: "Total nearby Bluetooth devices" label
-                        html.Div(
-                            children=[
-                                html.H4("Total nearby Bluetooth devices", style={'color': '#ecf0f1'}),
-                            ],
-                            style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
-                        ),
-            
-                        # Right side: Number of nearby Bluetooth devices
-                        html.Div(
-                            children=[
-                                html.H1("N/A", id='bluetoothDiv', style={'color': 'black', 'margin': '0', 'background-color': 'white', 'border': '2px solid black', 'padding': '8px', 'border-radius': '5px', 'font-size': 'inherit'}),
-                            ],
-                            style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
-                        ),
-                    ],
-                    style={'display': 'flex', 'background': '#3498db', 'border-radius': '10px', 'margin': '16px 0'},
-                ),
-    
-                html.Button('Submit', id='bluetoothbtn', n_clicks=0),
-            ]),
+                html.Section(id="", children=[
+                    html.H2("Bluetooth Devices"),
+
+                    # Blue rectangle container
+                    html.Div(
+                        children=[
+                            # Left side: "Total nearby Bluetooth devices" label
+                            html.Div(
+                                children=[
+                                    html.H4("Total nearby Bluetooth devices", style={'color': '#ecf0f1'}),
+                                ],
+                                style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
+                            ),
+
+                            # Right side: Number of nearby Bluetooth devices
+                            html.Div(
+                                children=[
+                                    html.H1("N/A", id='bluetoothDiv', style={'color': 'black', 'margin': '0', 'background-color': 'white', 'border': '2px solid black', 'padding': '8px', 'border-radius': '5px', 'font-size': 'inherit'}),
+                                ],
+                                style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
+                            ),
+                        ],
+                        style={'display': 'flex', 'background': '#3498db', 'border-radius': '10px', 'margin': '16px 0'},
+                    ),
+
+                    html.Button('Submit', id='bluetoothbtn', n_clicks=0),
+                ]),
+            ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
         ]),
         # Footer
         html.Footer([
@@ -243,7 +250,6 @@ app.layout = html.Div([
 )
 
 def set_brightness_image(n_intervals, value):
-    # print("NIGGGER")
     currrent_brightness = ((int(value) * 100) / max_brightness)
     return {'filter': f'brightness({currrent_brightness}%)'}
 
@@ -309,7 +315,7 @@ def checkTemp(value):
         FAN_STATUS = False
         
     print(FAN_STATUS)
-    motor.switchMotor(FAN_STATUS)
+    # motor.switchMotor(FAN_STATUS)
     return toggle_fan(FAN_STATUS)
 
 def toggle_fan(fan_status):
