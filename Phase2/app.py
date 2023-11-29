@@ -23,7 +23,7 @@ import imaplib
 # mqtt
 # import paho.mqtt.subscribe as subscribe
 from MQTT import Controller
-mqtt_server = 'yourIP' #Add your IP to connect to MQTT server
+mqtt_server = '192.168.2.31' #Add your IP to connect to MQTT server
 topicLightIntensity = "sensors/light/intensity"
 topicRfid = "sensors/rfid/id"
 light_controller = Controller(mqtt_server, topicLightIntensity)
@@ -68,7 +68,9 @@ subject = 'Checking Temperature'
 smtp_server = 'smtp.gmail.com'
 sender_email = 'cookiecove8@gmail.com'
 sender_password = 'skfp plbw ttkw xaip'
-receiver_email = 'baduar10@gmail.com'
+# receiver_email = 'baduar10@gmail.com'
+receiver_email = currentSettings.user_email
+emailCount = 0
 
 
 external_scripts = [
@@ -126,10 +128,13 @@ app.layout = html.Div([
                 html.H2("Phase 4 - RFID and Database"),
                 html.Div(children=[
                     html.Div("ID: ", id='User_ID'),
-                    html.Div("NAME: ", id='User_NAME'),
+                    html.Div("Name: ", id='User_NAME'),
+                    html.Div("Email: ", id='User_EMAIL'),
+                    html.Div("Card ID: ", id='User_CARDID'),
                     html.Div("Temperature: ", id='User_TEMP'),
                     html.Div("Humidity: ", id='User_HUM'),
                     html.Div("Light Intensity: ", id='User_LIGHT'),
+                    html.Img(src='assets/images/defaultpfp.jpg', id='User_PHOTO', width="100", height="100"),
                 ]),
             ]),
             # html.Section(id="lightswitch", children=[
@@ -466,9 +471,12 @@ def getDataLightfromArduino(n_intervals):
 @app.callback(
     Output('User_ID', 'children'),
     Output('User_NAME', 'children'),
+    Output('User_EMAIL', 'children'),
+    Output('User_CARDID', 'children'),
     Output('User_TEMP', 'children'),
     Output('User_HUM', 'children'),
     Output('User_LIGHT', 'children'),
+    Output('User_PHOTO', 'src'),
     Input('interval-component', 'n_intervals')
 )
 
@@ -476,32 +484,64 @@ def getDataUserfromArduino(n_intervals):
     rfidvalue = rfid_controller.getRfidId()
     strRfidValue = str(rfidvalue)
     print(f'rfid ID: {rfidvalue}')
+    global emailCount
+
+    # if rfidvalue != 0 or currentSettings.card_id != 0:
+    #     if rfidvalue != currentSettings.card_id:
+    #         emailCount = 1
+    #     else:
+    #         emailCount = 0
+
+    #     if emailCount == 1:
+    #         current_time = datetime.now().strftime("%H:%M")
+    #         subject = f"UserX entered at {current_time} time."
+    #         message = f"UserX enetred at {current_time} after tapping card."
+
+    #         if send_email(subject, message, sender_email, sender_password, receiver_email):
+    #             print("Email sent successfully")
+    #             # Add a delay to avoid sending multiple emails in a short time
+    #             time.sleep(30)
+    #         else:
+    #             print("Email sending failed!")
+
 
     # print('HELLOOOO')
     userData = getUserData(strRfidValue)
+    # print(userData)
     # print('HIII')
-    if len(userData) == 0:
+    # if len(userData[0]) == 0 or rfidvalue == 0:
+    if not userData or rfidvalue == 0:
         # print('HUH?!?!?!')
-        return 'ID: ', 'Name: ', 'Temperature: ', 'Light Intensity: '
+        return 'ID: ', 'Name: ', 'Email: ', 'Card ID: ', 'Temperature: ', 'Humidity: ', 'Light Intensity: ', 'assets/images/defaultpfp.jpg '
     else:
+        # print('NICEE')
         id = userData[0][0]
         first_name = userData[0][1]
         last_name = userData[0][2]
-        card_id = userData[0][3]
-        temp = userData[0][4]
-        light = userData[0][4]
+        user_email = userData[0][3] 
+        card_id = userData[0][4]
+        temp = userData[0][5]
+        hum = userData[0][6]
+        light = userData[0][7]
+        photo = userData[0][8]
 
-        print(userData)
+        # print(userData[0][3])
 
         # set current user settings
         currentSettings.temperature = temp
         currentSettings.brightness = light
+        currentSettings.card_id = card_id
+        currentSettings.user_email = user_email
 
         id_display = f'ID: {id}'
         name_display = f'Name: {first_name} {last_name}'
+        email_display = f'Email: {user_email}'
+        cardID_display = f'Card ID: {card_id}'
         temp_display = f'Temperature: {temp}'
+        hum_display = f'Humidity: {hum}'
         light_display = f'Light Intensity: {light}'
-        return id_display, name_display, temp_display, light_display
+        photo_display = f'{photo}'
+        return id_display, name_display, email_display, cardID_display, temp_display, hum_display, light_display, photo_display
 
 def getUserData(rfidID):
     return rfid_controller.getDisplayData(rfidID)
