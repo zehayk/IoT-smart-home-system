@@ -31,6 +31,11 @@ rfid_controller = Controller(mqtt_server, topicRfid)
 light_controller.start()
 rfid_controller.start()
 
+# Setup User settings
+from UserSettings import UserSettings
+global currentSettings
+currentSettings = UserSettings()
+
 # Setup LED 
 from LED import LED
 led_pin = 16
@@ -242,7 +247,7 @@ def checkTemp(value):
     global FAN_STATUS
     print(tempCount)
     print(FAN_STATUS)
-    if value >= 24 and tempCount == 0:
+    if value >= currentSettings.temperature and tempCount == 0:
         tempCount = 1
         print(tempCount)
         print('send email')
@@ -272,7 +277,7 @@ def checkTemp(value):
             FAN_STATUS = False
             # return toggle_fan(False)
 
-    elif value < 24 and tempCount == 1:
+    elif value < currentSettings.temperature and tempCount == 1:
         tempCount = 0
         print("Temperature gone down")
         FAN_STATUS = False
@@ -409,7 +414,7 @@ def checkIntensity(value):
     light_value = int(value)
     # print(light_value)
 
-    if light_value < 400 and lightCount == 0:
+    if light_value < currentSettings.brightness and lightCount == 0:
         lightCount = 1
         print("Light is ON")
         led.turn_on_led()
@@ -426,7 +431,7 @@ def checkIntensity(value):
         else:
             print("Email sending failed!")
 
-    elif light_value >= 400 and lightCount == 1:
+    elif light_value >= currentSettings.brightness and lightCount == 1:
         lightCount = 0
         print("Light is OFF")
         led.turn_off_led()
@@ -477,22 +482,26 @@ def getDataUserfromArduino(n_intervals):
     # print('HIII')
     if len(userData) == 0:
         # print('HUH?!?!?!')
-        return 'ID: ', 'Name: ', 'Temperature: ', 'Humidity: ', 'Light Intensity: '
+        return 'ID: ', 'Name: ', 'Temperature: ', 'Light Intensity: '
     else:
         id = userData[0][0]
-        name = userData[0][1]
-        temp = userData[0][2]
-        hum = userData[0][3]
+        first_name = userData[0][1]
+        last_name = userData[0][2]
+        card_id = userData[0][3]
+        temp = userData[0][4]
         light = userData[0][4]
 
         print(userData)
 
+        # set current user settings
+        currentSettings.temperature = temp
+        currentSettings.brightness = light
+
         id_display = f'ID: {id}'
-        name_display = f'Name: {name}'
+        name_display = f'Name: {first_name} {last_name}'
         temp_display = f'Temperature: {temp}'
-        hum_display = f'Humidity: {hum}'
         light_display = f'Light Intensity: {light}'
-        return id_display, name_display, temp_display, hum_display, light_display
+        return id_display, name_display, temp_display, light_display
 
 def getUserData(rfidID):
     return rfid_controller.getDisplayData(rfidID)
