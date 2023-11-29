@@ -202,8 +202,29 @@ app.layout = html.Div([
             ]),
             html.Section(id="", children=[
                 html.H2("Bluetooth Devices"),
-                html.H1("Total nearby Bluetooth devices:"),
-                html.Div("Total nearby Bluetooth devices: N/A", id='bluetoothDiv'),
+    
+                # Blue rectangle container
+                html.Div(
+                    children=[
+                        # Left side: "Total nearby Bluetooth devices" label
+                        html.Div(
+                            children=[
+                                html.H4("Total nearby Bluetooth devices", style={'color': '#ecf0f1'}),
+                            ],
+                            style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
+                        ),
+            
+                        # Right side: Number of nearby Bluetooth devices
+                        html.Div(
+                            children=[
+                                html.H1("N/A", id='bluetoothDiv', style={'color': 'black', 'margin': '0', 'background-color': 'white', 'border': '2px solid black', 'padding': '8px', 'border-radius': '5px', 'font-size': 'inherit'}),
+                            ],
+                            style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
+                        ),
+                    ],
+                    style={'display': 'flex', 'background': '#3498db', 'border-radius': '10px', 'margin': '16px 0'},
+                ),
+    
                 html.Button('Submit', id='bluetoothbtn', n_clicks=0),
             ]),
         ]),
@@ -553,18 +574,28 @@ def getUserData(rfidID):
     prevent_initial_call=True
 )
 
-def update_bluetooth_device_count(toggle_value):
-    print("Scanning for nearby bluetooth devices...")
-    scanner = Scanner()
-    devices = scanner.scan(10.0)
+def update_bluetooth_device_count(n_clicks):
+    print("Scanning for nearby Bluetooth devices...")
+    
+    start_time = time.time()  # Record the start time of the scan
+    scan_duration = 10.0  # Set the desired duration for the scan (in seconds)
+    
     num_devices = 0
     
-    for device in devices:
-        if (device.rssi > -100 and device.rssi < -75):
-            num_devices += 1
-            
+    scanner = Scanner()
+    
+    while (time.time() - start_time) < scan_duration:
+        devices = scanner.scan(2.0)  # Scan for 2 seconds (adjust as needed)
+        
+        for device in devices:
+            if -100 < device.rssi < -75:
+                num_devices += 1
+    
+    print("Nearby Devices Found")
     return num_devices
 
+    # Add a delay between scans to avoid overwhelming the system
+    time.sleep(60)  # Adjust the delay as needed
 
 # run app
 if __name__ == '__main__':
