@@ -315,7 +315,7 @@ def checkTemp(value):
         FAN_STATUS = False
         
     print(FAN_STATUS)
-    # motor.switchMotor(FAN_STATUS)
+    motor.switchMotor(FAN_STATUS)
     return toggle_fan(FAN_STATUS)
 
 def toggle_fan(fan_status):
