@@ -57,6 +57,7 @@ class Controller():
         self.client.loop_start()
 
 if __name__ == '__main__':
+    # To test MQTT 
     mqtt_server = 'yourIP'
     topicLightIntensity = "sensors/light/intensity"
     topicRfid = "sensors/rfid/id"

@@ -23,7 +23,7 @@ import imaplib
 # mqtt
 # import paho.mqtt.subscribe as subscribe
 from MQTT import Controller
-mqtt_server = '192.168.2.31' #Add your IP to connect to MQTT server
+mqtt_server = '172.20.10.2' #Add your IP to connect to MQTT server
 topicLightIntensity = "sensors/light/intensity"
 topicRfid = "sensors/rfid/id"
 light_controller = Controller(mqtt_server, topicLightIntensity)
@@ -68,8 +68,9 @@ subject = 'Checking Temperature'
 smtp_server = 'smtp.gmail.com'
 sender_email = 'cookiecove8@gmail.com'
 sender_password = 'skfp plbw ttkw xaip'
-# receiver_email = 'baduar10@gmail.com'
-receiver_email = currentSettings.user_email
+receiver_email = 'baduar10@gmail.com'
+# receiver_email = currentSettings.user_email
+
 emailCount = 0
 
 
@@ -201,8 +202,10 @@ app.layout = html.Div([
                         html.Data(id='light_data', value=0),
                         html.Div("Status of light:  ", id='status_of_led'),
                         html.Div("Message:  ", id='sending_email_light'),
-                        html.Img(src='assets/images/sun.png', id='room_brightness', width="250", height="250", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
-                        html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                        html.Div(style={'display': 'flex', 'justify-content': 'center' }, children=[
+                            html.Img(src='assets/images/sun.png', id='room_brightness', width="250", height="250", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
+                            html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                        ]),
                     ]),
                     dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
                 ]),
@@ -282,7 +285,7 @@ def checkTemp(value):
     if value >= currentSettings.temperature and tempCount == 0:
         tempCount = 1
         print(tempCount)
-        print('send email')
+        print('send about temperature email')
         
         message = f'The current temperature is {value:.2f}°C. Would you like to turn on the fan?'
         if send_email(subject, message, sender_email, sender_password, receiver_email) == True:
@@ -426,6 +429,7 @@ def update_sensor_data(n_intervals):
 #Phase 3
 @callback(
     Output('status_of_led', 'children'),
+    Output("img_light", "src"),
     Input('light_data', 'value'),
 )
 
@@ -457,7 +461,7 @@ def checkIntensity(value):
         message = f"The light turned on at {current_time} time due to low intensity."
 
         if send_email(subject, message, sender_email, sender_password, receiver_email):
-            print("Email sent successfully")
+            print("Email about light sent successfully")
             # Add a delay to avoid sending multiple emails in a short time
             time.sleep(30)
         else:
@@ -469,7 +473,7 @@ def checkIntensity(value):
         led.turn_off_led()
         LED_STATUS = False
     
-    return status_LED(LED_STATUS)
+    return status_LED(LED_STATUS), get_light_image(LED_STATUS)
 
 # setup_gpio()
 
@@ -478,6 +482,12 @@ def status_LED(LED_STATUS):
         return "Status of light: LED is on and Email has been sent"
     else:
         return "Status of light: LED is off"
+    
+def get_light_image(LED_STATUS):
+    if LED_STATUS == True:
+        return 'assets/images/LightOn.PNG'
+    else:
+        return 'assets/images/LightOff.PNG'
 
 # Replace this with your actual light intensity reading
 # light_intensity_value = 300
@@ -508,29 +518,12 @@ def getDataLightfromArduino(n_intervals):
 )
 
 def getDataUserfromArduino(n_intervals):
+    global emailCount
+    global current_carId
+    
     rfidvalue = rfid_controller.getRfidId()
     strRfidValue = str(rfidvalue)
     print(f'rfid ID: {rfidvalue}')
-    global emailCount
-
-    # if rfidvalue != 0 or currentSettings.card_id != 0:
-    #     if rfidvalue != currentSettings.card_id:
-    #         emailCount = 1
-    #     else:
-    #         emailCount = 0
-
-    #     if emailCount == 1:
-    #         current_time = datetime.now().strftime("%H:%M")
-    #         subject = f"UserX entered at {current_time} time."
-    #         message = f"UserX enetred at {current_time} after tapping card."
-
-    #         if send_email(subject, message, sender_email, sender_password, receiver_email):
-    #             print("Email sent successfully")
-    #             # Add a delay to avoid sending multiple emails in a short time
-    #             time.sleep(30)
-    #         else:
-    #             print("Email sending failed!")
-
 
     # print('HELLOOOO')
     userData = getUserData(strRfidValue)
@@ -551,6 +544,27 @@ def getDataUserfromArduino(n_intervals):
         hum = userData[0][6]
         light = userData[0][7]
         photo = userData[0][8]
+
+        print(f'emailCount: before {emailCount}')
+        if emailCount == 0:
+            emailCount = 1
+            current_carId = int(rfidvalue)
+            print(f'emailCount: after {emailCount}')
+            current_time = datetime.now().strftime("%H:%M")
+            subject = f"User {first_name} {last_name} entered at {current_time} time."
+            message = f"User {first_name} {last_name} enetred at {current_time} after tapping card."
+
+            if send_email(subject, message, sender_email, sender_password, receiver_email):
+                print("Email to User sent successfully")
+                # Add a delay to avoid sending multiple emails in a short time
+                time.sleep(30)
+            else:
+                print("Email sending failed!")
+        
+        # if int(rfidvalue) != currentSettings.card_id:
+        if current_carId != int(rfidvalue):
+            emailCount = 0
+            print(f'emailCount: change {emailCount}')
 
         # print(userData[0][3])
 
