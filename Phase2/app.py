@@ -68,8 +68,10 @@ motor = DC_Motor(Motor1_pin, Motor2_pin, Motor3_pin, False)
 # Email Information
 subject = 'Checking Temperature'
 smtp_server = 'smtp.gmail.com'
-sender_email = 'cookiecove8@gmail.com'
-sender_password = 'skfp plbw ttkw xaip'
+# sender_email = 'cookiecove8@gmail.com'
+sender_email = 'python01100922@gmail.com'
+# sender_password = 'skfp plbw ttkw xaip'
+sender_password = 'txlzudjyidtoxtyj'
 receiver_email = 'baduar10@gmail.com'
 # receiver_email = currentSettings.user_email
 
@@ -530,7 +532,7 @@ def getDataUserfromArduino(n_intervals):
     # if len(userData[0]) == 0 or rfidvalue == 0:
     if not userData or rfidvalue == 0:
         # print('HUH?!?!?!')
-        return 'ID: ', 'Name: ', 'Email: ', 'Card ID: ', 'Temperature: ', 'Humidity: ', 'Light Intensity: ', 'assets/images/defaultpfp.jpg '
+        return ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'assets/images/defaultpfp.jpg '
     else:
         # print('NICEE')
         id = userData[0][0]
@@ -572,14 +574,14 @@ def getDataUserfromArduino(n_intervals):
         currentSettings.card_id = card_id
         currentSettings.user_email = user_email
 
-        id_display = f'ID: {id}'
-        name_display = f'Name: {first_name} {last_name}'
-        email_display = f'Email: {user_email}'
-        cardID_display = f'Card ID: {card_id}'
-        temp_display = f'Temperature: {temp}'
-        hum_display = f'Humidity: {hum}'
-        light_display = f'Light Intensity: {light}'
-        photo_display = f'{photo}'
+        id_display = f' {id}'
+        name_display = f' {first_name} {last_name}'
+        email_display = f' {user_email}'
+        cardID_display = f' {card_id}'
+        temp_display = f' {temp}'
+        hum_display = f' {hum}'
+        light_display = f' {light}'
+        photo_display = f' {photo}'
         return id_display, name_display, email_display, cardID_display, temp_display, hum_display, light_display, photo_display
 
 def getUserData(rfidID):
@@ -617,4 +619,5 @@ def update_bluetooth_device_count(n_clicks):
 
 # run app
 if __name__ == '__main__':
+    # app.run(host='172.20.10.2', debug=True)
     app.run(debug=True)
