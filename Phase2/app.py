@@ -74,32 +74,7 @@ receiver_email = 'baduar10@gmail.com'
 emailCount = 0
 
 
-external_scripts = [
-    # "https://cdn.amcharts.com/lib/5/index.js",
-    # "https://cdn.amcharts.com/lib/5/xy.js",
-    # "https://cdn.amcharts.com/lib/5/radar.js",
-    # "https://cdn.amcharts.com/lib/5/themes/Animated.js",
-    # 'tempChart.js',
-    # 'humidityChart.js'
-]
-
-external_stylesheets = [
-    # 'https://codepen.io/chriddyp/pen/bWLwgP.css',
-    # {
-    #     'href': 'https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css',
-    #     'rel': 'stylesheet',
-    #     'integrity': 'sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO',
-    #     'crossorigin': 'anonymous'
-    # }
-]
-with open("tempChart.js", "r") as file:
-    tempChartScript = file.read()
-with open("humidityChart.js", "r") as file:
-    humChartScript = file.read()
-
-
-# app = Dash(__name__)
-app = Dash(__name__, external_scripts=external_scripts, external_stylesheets=external_stylesheets)
+app = Dash(__name__)
 
 app.layout = html.Div([
     html.Div([
@@ -119,26 +94,38 @@ app.layout = html.Div([
         html.Header([
             html.H1("Smart Home Dashboard", style={'color': '#ecf0f1'}),
         ]),
-        html.Nav([
-            dcc.Link("Devices", href="#devices", style={'color': '#ecf0f1', 'margin': '0 1em'}),
-            dcc.Link("Sensors", href="#sensors", style={'color': '#ecf0f1', 'margin': '0 1em'}),
-            dcc.Link("Controls", href="#controls", style={'color': '#ecf0f1', 'margin': '0 1em'}),
-        ]),
         html.Main([
             html.Div([
                 html.Section(id="profile", children=[
-                    html.H2("Phase 4 - RFID and Database"),
-                    html.Div(children=[
-                        html.Div("ID: ", id='User_ID'),
-                        html.Div("Name: ", id='User_NAME'),
-                        html.Div("Email: ", id='User_EMAIL'),
-                        html.Div("Card ID: ", id='User_CARDID'),
-                        html.Div("Temperature: ", id='User_TEMP'),
-                        html.Div("Humidity: ", id='User_HUM'),
-                        html.Div("Light Intensity: ", id='User_LIGHT'),
-                        html.Img(src='assets/images/defaultpfp.jpg', id='User_PHOTO', width="100", height="100"),
-                    ]),
-                ]),
+                    html.H2("User Information"),
+                    html.Div(
+                        children=[
+                            html.Div(
+                                html.Img(src='assets/images/defaultpfp.jpg', id='User_PHOTO', width="100", height="100",
+                                         style={"border-radius": "50%", "margin-bottom": "10px"}),
+                                style={"text-align": "center"}
+                            ),
+                            html.Div([html.Strong("ID: "), html.Span(id='User_ID')]),
+                            html.Div([html.Strong("Name: "), html.Span(id='User_NAME')]),
+                            html.Div([html.Strong("Email: "), html.Span(id='User_EMAIL')]),
+                            html.Div([html.Strong("Card ID: "), html.Span(id='User_CARDID')]),
+                            html.Div([html.Strong("Temperature: "), html.Span(id='User_TEMP')]),
+                            html.Div([html.Strong("Humidity: "), html.Span(id='User_HUM')]),
+                            html.Div([html.Strong("Light Intensity: "), html.Span(id='User_LIGHT')]),
+                        ],
+                        style={
+                            "display": "flex",
+                            "flexDirection": "column",
+                            "alignItems": "center",
+                            "margin": "20px",
+                            # "max-width": "300px",  # Set your desired max-width
+                        },
+                    ),
+                ],
+                    style={
+                        # "max-width": "300px",  # Set your desired max-width
+                    },
+                ),
                 # html.Section(id="lightswitch", children=[
                 #     html.H2("Phase 1 - Light Switch"),
 
@@ -160,82 +147,85 @@ app.layout = html.Div([
                 # ]),
                 # html.Button('Send Email', id='sending_email', n_clicks=0),
                 # ]),
-                html.Section(id="dht11sensor", children=[
-                    html.H2("Phase 2 - DHT11 Sensor Data"),
-                    html.Div([
-                        # html.Div("Temperature: ", id='temperature'),
-                        # html.Div("Humdity: ", id='humidity'),
-                        html.Div([
-                            daq.Gauge(
-                                color={"gradient":True,"ranges":{"green":[0,6],"yellow":[6,8],"red":[8,10]}},
-                                id="TempGauge",
-                                showCurrentValue=True,
-                                units="Temp " + u'\N{DEGREE SIGN}',
-                                label='Temperature',
-                                max=100,
-                                min=0,
-                                size=200,
-                                value=0,
-                            ),
-                            daq.Gauge(
-                                color={"gradient":True,"ranges":{"white":[0,5],"blue":[5,10]}},
-                                id="HumGauge",
-                                showCurrentValue=True,
-                                units="Hum %",
-                                label='Humidity',
-                                max=100,
-                                min=0,
-                                size=200,
-                                value=0,
-                            ),
-                            html.Img(src='assets/images/Fan2.PNG', id='status_fan', className="Fan_Off", width="250", height="250"),
-                        ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
-                    ]),
-                ]),
-            ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
 
-            html.Div([
-                html.Section(id="", children=[
-                    html.H2("Phase 3 - Photoresistor Sensor Data"),
+                html.Div([
                     html.Div([
-                        html.Div("Light: ", id='light_intensity'),
-                        html.Data(id='light_data', value=0),
-                        html.Div("Status of light:  ", id='status_of_led'),
-                        html.Div("Message:  ", id='sending_email_light'),
-                        html.Div(style={'display': 'flex', 'justify-content': 'center' }, children=[
-                            html.Img(src='assets/images/sun.png', id='room_brightness', width="250", height="250", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
-                            html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                        html.Section(id="dht11sensor", children=[
+                            # html.H2("Phase 2 - DHT11 Sensor Data"),
+                            html.Div([
+                                # html.Div("Temperature: ", id='temperature'),
+                                # html.Div("Humdity: ", id='humidity'),
+                                html.Div([
+                                    daq.Gauge(
+                                        color={"gradient":True,"ranges":{"green":[0,6],"yellow":[6,8],"red":[8,10]}},
+                                        id="TempGauge",
+                                        showCurrentValue=True,
+                                        units="Temp " + u'\N{DEGREE SIGN}',
+                                        label='Temperature',
+                                        max=100,
+                                        min=0,
+                                        size=200,
+                                        value=0,
+                                    ),
+                                    daq.Gauge(
+                                        color={"gradient":True,"ranges":{"white":[0,5],"blue":[5,10]}},
+                                        id="HumGauge",
+                                        showCurrentValue=True,
+                                        units="Hum %",
+                                        label='Humidity',
+                                        max=100,
+                                        min=0,
+                                        size=200,
+                                        value=0,
+                                    ),
+                                    html.Img(src='assets/images/Fan2.PNG', id='status_fan', className="Fan_Off", width="250", height="250"),
+                                ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
+                            ]),
                         ]),
+                        html.Section(id="Photoresistor Sensor Data", children=[
+                        html.H2("Phase 3 - Photoresistor Sensor Data"),
+                        html.Div([
+                            html.Div("Light: ", id='light_intensity'),
+                            html.Data(id='light_data', value=0),
+                            html.Div("Status of light:  ", id='status_of_led'),
+                            html.Div("Message:  ", id='sending_email_light'),
+                            html.Div(style={'display': 'flex', 'justify-content': 'center' }, children=[
+                                html.Img(src='assets/images/sun.png', id='room_brightness', width="250", height="250", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
+                                html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                            ]),
+                        ]),
+                        dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
                     ]),
-                    dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
-                ]),
-                html.Section(id="", children=[
-                    html.H2("Bluetooth Devices"),
+                    ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
+                    html.Section(id="Bluetooth Devices", children=[
+                        html.H2("Bluetooth Devices"),
 
-                    # Blue rectangle container
-                    html.Div(
-                        children=[
-                            # Left side: "Total nearby Bluetooth devices" label
-                            html.Div(
-                                children=[
-                                    html.H4("Total nearby Bluetooth devices", style={'color': '#ecf0f1'}),
-                                ],
-                                style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
-                            ),
+                        # Blue rectangle container
+                        html.Div(
+                            children=[
+                                # Left side: "Total nearby Bluetooth devices" label
+                                html.Div(
+                                    children=[
+                                        html.H4("Total nearby Bluetooth devices", style={'color': '#ecf0f1'}),
+                                    ],
+                                    style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
+                                ),
 
-                            # Right side: Number of nearby Bluetooth devices
-                            html.Div(
-                                children=[
-                                    html.H1("N/A", id='bluetoothDiv', style={'color': 'black', 'margin': '0', 'background-color': 'white', 'border': '2px solid black', 'padding': '8px', 'border-radius': '5px', 'font-size': 'inherit'}),
-                                ],
-                                style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
-                            ),
-                        ],
-                        style={'display': 'flex', 'background': '#3498db', 'border-radius': '10px', 'margin': '16px 0'},
-                    ),
+                                # Right side: Number of nearby Bluetooth devices
+                                html.Div(
+                                    children=[
+                                        html.H1("N/A", id='bluetoothDiv', style={'color': 'black', 'margin': '0', 'background-color': 'white', 'border': '2px solid black', 'padding': '8px', 'border-radius': '5px', 'font-size': 'inherit'}),
+                                    ],
+                                    style={'flex': '50%', 'padding': '16px', 'box-sizing': 'border-box'},
+                                ),
+                            ],
+                            style={'display': 'flex', 'background': '#3498db', 'border-radius': '10px', 'margin': '16px 0'},
+                        ),
 
-                    html.Button('Submit', id='bluetoothbtn', n_clicks=0),
-                ]),
+                        html.Button('Submit', id='bluetoothbtn', n_clicks=0),
+                    ]),
+
+                ], style={'display': 'flex', 'flexDirection': 'column', 'gap': '20px'}),
             ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
         ]),
         # Footer

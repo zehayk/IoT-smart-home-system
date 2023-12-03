@@ -3,7 +3,8 @@ body {
     font-size: 14px;
     margin: 0;
     padding: 0;
-    background: url('https://as2.ftcdn.net/v2/jpg/05/54/47/79/1000_F_554477926_yKEcMeDTD1oLqKQCjvpryeT5zHLMunNh.jpg') center/cover no-repeat fixed;
+    background-color: #c7c7c7;
+    /* background: url('https://as2.ftcdn.net/v2/jpg/05/54/47/79/1000_F_554477926_yKEcMeDTD1oLqKQCjvpryeT5zHLMunNh.jpg') center/cover no-repeat fixed; */
     color: #333;
 }
 
