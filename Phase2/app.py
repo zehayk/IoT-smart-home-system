@@ -5,6 +5,8 @@ from datetime import datetime
 import dash_daq as daq
 import RPi.GPIO as GPIO
 import time
+from bluepy.btle import Scanner
+
 from time import sleep
 # import pydash
 # import bluetooth
