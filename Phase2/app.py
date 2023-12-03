@@ -185,19 +185,25 @@ app.layout = html.Div([
                             ]),
                         ]),
                         html.Section(id="Photoresistor Sensor Data", children=[
-                        html.H2("Phase 3 - Photoresistor Sensor Data"),
-                        html.Div([
-                            html.Div("Light: ", id='light_intensity'),
-                            html.Data(id='light_data', value=0),
-                            html.Div("Status of light:  ", id='status_of_led'),
-                            html.Div("Message:  ", id='sending_email_light'),
-                            html.Div(style={'display': 'flex', 'justify-content': 'center' }, children=[
-                                html.Img(src='assets/images/sun.png', id='room_brightness', width="250", height="250", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
-                                html.Img(src='assets/images/LightOff.PNG', id='img_light', width="100", height="100"),
+                            html.H2("Phase 3 - Photoresistor Sensor Data"),
+                            html.Div([
+
+                                # html.Div("Message:  ", id='sending_email_light'),
+                                html.Div(style={'display': 'flex', 'justify-content': 'center' }, children=[
+                                    html.Div([
+                                        html.Div("Light: ", id='light_intensity'),
+                                        html.Data(id='light_data', value=0),
+                                        html.Img(src='assets/images/sun.png', id='room_brightness', width="170", height="170", style={'filter': 'brightness(100%)'}),  # style="filter: brightness(10%)"
+                                    ]),
+                                    html.Div([
+                                        html.Div("LED Status", id=''),
+                                        html.Img(src='assets/images/LightOff.PNG', id='img_light', width="170", height="170"),
+                                    ]),
+                                ]),
+                                html.Div("", id='status_of_led', style={'padding-left': '80px', 'padding-top': '20px'}),
                             ]),
+                            dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
                         ]),
-                        dcc.Interval(id='interval-component', interval=3*1000, n_intervals=0),
-                    ]),
                     ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
                     html.Section(id="Bluetooth Devices", children=[
                         html.H2("Bluetooth Devices"),
@@ -228,12 +234,12 @@ app.layout = html.Div([
                     ]),
 
                 ], style={'display': 'flex', 'flexDirection': 'column', 'gap': '20px'}),
-            ], style={'display': 'grid', 'grid-template-columns': '1fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'}),
+            ], style={'display': 'grid', 'grid-template-columns': '0.2fr 1fr', 'grid-column-gap': '20px', 'grid-row-gap': '20px'})
         ]),
         # Footer
-        html.Footer([
-            html.P("© 2023 Smart Home Dashboard", style={'color': '#ecf0f1'}),
-        ]),
+        # html.Footer([
+        #     html.P("© 2023 Smart Home Dashboard", style={'color': '#ecf0f1'}),
+        # ]),
     ]),
 ])
 
@@ -471,9 +477,9 @@ def checkIntensity(value):
 
 def status_LED(LED_STATUS):
     if (LED_STATUS == True):
-        return "Status of light: LED is on and Email has been sent"
+        return "Message: Email has been sent"
     else:
-        return "Status of light: LED is off"
+        return ""
     
 def get_light_image(LED_STATUS):
     if LED_STATUS == True:
@@ -494,7 +500,7 @@ def getDataLightfromArduino(n_intervals):
     lightvalue = light_controller.getLightInensity()
     strlightvalue = str(lightvalue)
     # print(f'light: {lightvalue}')
-    return lightvalue, strlightvalue
+    return f"Light Intensity: {lightvalue}", strlightvalue
 
 # Phase 4 
 @app.callback(
